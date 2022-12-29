@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt')
 const router = require('express').Router()
 const auth = require('../config/auth')
 const Otp = require('../models/otp')
-const sgMail = require('@sendgrid/mail')
+const nodemailer = require('nodemailer')
 
 //register a user
 router.post('/user/register', async (req, res) => {
@@ -64,8 +64,7 @@ router.post('/user/add-wallet', auth, async (req, res) => {
     }
 })
 
-//----forget password
-//sending mail
+//sending email for forgot password
 router.post('/user/forget-password/send', async (req, res) => {
     try {
         const user = await User.findOne({email: req.body.email})
@@ -80,28 +79,35 @@ router.post('/user/forget-password/send', async (req, res) => {
         })
         await otp.save()
 
-        //setting the sendgrid api key  
-        sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-
-        //sending mail
-        sgMail.send({
-            to: req.body.email, 
-            from: 'rupali.h@esrotlab.com',
-            subject: 'Reset your password for PaymentDapp',
-            text: 'We have got a request to reset your password for PaymentDapp',
-            html: `<p>Your code to reset the password is <b>${otp.code}</b></br>Expiring in 5 mintues</p>`
-        }).then(response => {
-            console.log("success ",response[0].statusCode)
-        }).catch(err => {
-            console.log("err", err.response.body)
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                type: 'OAuth2',
+                user: process.env.USER_EMAIL,
+                pass: process.env.USER_PASS,
+                refreshToken: process.env.REFRESH_TOKEN,
+                accessToken: process.env.ACCESS_TOKEN
+            }
         })
 
-        res.send({msg: `code has successfully sent to your email id`, code: otp.code})
+        const mailOptions = {
+            from: process.env.USER_EMAIL,
+            to: 'rupali.h@esrotlab.com',
+            subject: 'reset your paymentDapp password',
+            text: `Your code is ${otp.code}, expiring in 5 minutes`
+        } 
+
+        transporter.sendMail(mailOptions, (err, info) => {
+            if(err) console.log("error, couldn't send email: ", err)
+            else console.log("success, email sent: ", info)
+        })
+
+        res.send({msg: `code has successfully sent to your email id`})
     } catch (err) {
         res.status(404).send({err: err.message})
     }
 })
-
+ 
 //updating password
 router.post('/user/forget-password/update', async (req, res) => {
     try {
@@ -112,7 +118,7 @@ router.post('/user/forget-password/update', async (req, res) => {
         const getOtp = await Otp.find({email, code})
         if(!getOtp) throw new Error("couldn't send OTP, please try again")
 
-        if((new Date().getTime() - getOtp[0].expiresIn) > 0) throw new Error("Token was expired")
+        if((new Date().getTime() - getOtp[0].expiresIn) > 0) throw new Error("This OTP has exceeded the time limit")
 
         if(code != getOtp[0].code) throw new Error("OTP does not match, please try again")
 
