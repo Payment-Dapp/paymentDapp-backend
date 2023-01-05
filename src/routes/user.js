@@ -85,21 +85,20 @@ router.post('/user/forget-password/send', async (req, res) => {
                 type: 'OAuth2',
                 user: process.env.USER_EMAIL,
                 pass: process.env.USER_PASS,
-                refreshToken: process.env.REFRESH_TOKEN,
                 accessToken: process.env.ACCESS_TOKEN
             }
         })
 
         const mailOptions = {
             from: process.env.USER_EMAIL,
-            to: 'rupali.h@esrotlab.com',
-            subject: 'reset your paymentDapp password',
+            to: req.body.email,
+            subject: 'Reset your paymentDapp password',
             text: `Your code is ${otp.code}, expiring in 5 minutes`
         } 
 
         transporter.sendMail(mailOptions, (err, info) => {
-            if(err) console.log("error, couldn't send email: ", err)
-            else console.log("success, email sent: ", info)
+            if(err) throw new Error("could'nt send otp, invlid email address")
+            else res.send({msg: `code has successfully sent to your email id`})
         })
 
         res.send({msg: `code has successfully sent to your email id`})
