@@ -8,6 +8,9 @@ const walletSchema = mongoose.Schema({
     address: {
         type: String,
         required: true
+    },
+    owner: {
+        type: String
     }
 })
 
