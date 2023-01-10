@@ -14,7 +14,7 @@ router.post('/user/register', async (req, res) => {
 
         const token = await user.generateAuthToken()
         res.send({
-            name: user.firstName + " " + user.lastName,
+            name: `${user.firstname} ${user.lastname}`,
             username: user.username,
             email: user.email,
             phone: user.phone,
@@ -41,7 +41,7 @@ router.post('/user/login', async (req, res) => {
 
             const token = await user.generateAuthToken()
             res.send({
-                name: user.firstName + " " + user.lastName,
+                name: `${user.firstname} ${user.lastname}`,
                 username: user.username,
                 email: user.email,
                 phone: user.phone,
@@ -49,6 +49,34 @@ router.post('/user/login', async (req, res) => {
             })
     } catch (err) {
         res.status(404).send({err: err.message})
+    }
+})
+
+//editing user profile
+router.post('/user/update/:email', async (req, res) => {
+    try {
+        const email = req.params.email
+        const user = await User.findOne({email})
+        if(!user) throw new Error('user not found') 
+        const fieldsToBeUpdated = ['firstname', 'lastname', 'username', 'email', 'phone']
+        const fields = Object.keys(req.body)
+
+        fieldsToBeUpdated.map((f,i) => { 
+            if(fields.includes(fieldsToBeUpdated[i])) {
+                user[f] = req.body[f]
+            }
+        })
+        await user.save()
+        res.send({msg: "user updated", 
+        user: {
+            name: `${user.firstname} ${user.lastname}`,
+            username: user.username,
+            email: user.lastname,
+            phone: user.phone
+        }
+    })
+    } catch (err) { 
+        res.status(400).send({err: err.message})
     }
 })
 
@@ -85,7 +113,9 @@ router.post('/user/forget-password/send', async (req, res) => {
                 type: 'OAuth2',
                 user: process.env.USER_EMAIL,
                 pass: process.env.USER_PASS,
-                accessToken: process.env.ACCESS_TOKEN
+                clientId: process.env.CLIENT_ID,
+                clientSecret: process.env.CLIENT_SECRET,
+                refreshToken: process.env.REFRESH_TOKEN
             }
         })
 
@@ -97,7 +127,7 @@ router.post('/user/forget-password/send', async (req, res) => {
         } 
 
         transporter.sendMail(mailOptions, (err, info) => {
-            if(err) throw new Error("could'nt send otp, invlid email address")
+            if(err) throw new Error(err)
             else res.send({msg: `code has successfully sent to your email id`})
         })
 
@@ -123,10 +153,18 @@ router.post('/user/forget-password/update', async (req, res) => {
 
         user.password = newPassword
         await user.save()
-        console.log(user.password, newPassword)
-
         res.send({msg: "Password updated successfully!"})
     } catch (err) {
+        res.status(400).send({err: err.message})
+    }
+})
+
+//get contacts
+router.get('/contacts', async (req, res) => {
+    try {
+        const contacts = await Wallet.find()
+        res.send({contacts})
+    } catch(err) {
         res.status(400).send({err: err.message})
     }
 })

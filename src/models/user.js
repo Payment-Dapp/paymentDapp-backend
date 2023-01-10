@@ -4,30 +4,26 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
 const userSchema = mongoose.Schema ({
-    firstName: {
+    firstname: {
         type: String,
-        required: true,
         validate: (value) => {
             if(!validator.isAlpha(value)) throw new Error('Firstname is empty or inavlid')
         }
     }, 
-    lastName: {
+    lastname: {
         type: String,
-        required: true,
         validate: (value) => {
             if(!validator.isAlpha(value)) throw new Error('Lastname is empty or inavlid')
         }
     },
     username: {
-        type: String,
-        required: true, 
+        type: String, 
         unique: true,
         trim: true,
         lowercase: true
     },
     email: {
         type: String,
-        required: true,
         trim: true,
         lowercase: true,
         unique: true,
@@ -37,14 +33,12 @@ const userSchema = mongoose.Schema ({
     },
     phone: {
         type: String,
-        required: true,
         validate: (value) => {
             if(!validator.isMobilePhone(value)) throw new Error('Phone is empty or inavlid')
         }
     },
     password: {
         type: String,
-        required: true,
         trime: true,
         validate: (value) => {
             if(!validator.isStrongPassword(value)) throw new Error("Password is empty or inavlid")
