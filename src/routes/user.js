@@ -53,10 +53,10 @@ router.post('/user/login', async (req, res) => {
     }
 })
 
-//editing user profile
-router.post('/user/update/:id', async (req, res) => {
+//editing user profile 
+router.post('/user/update', async (req, res) => {
     try {
-        const id = mongoose.Types.ObjectId(req.params.id.trim())
+        const id = mongoose.Types.ObjectId(req.query.id.trim())
         const user = await User.findById(id)
         if(!user) throw new Error('user not found') 
 
@@ -142,10 +142,10 @@ router.post('/user/forget-password/send', async (req, res) => {
 })
  
 //verify otp
-router.post('/user/forget-password/verify-otp/:email', async (req, res) => {
+router.post('/user/forget-password/verify-otp', async (req, res) => {
     try {
         const code = req.body.code
-        const email = req.params.email
+        const email = req.query.email
 
         const getOtp = await Otp.find({email, code})
         if(!getOtp) throw new Error("couldn't send OTP, please try again")
@@ -161,9 +161,9 @@ router.post('/user/forget-password/verify-otp/:email', async (req, res) => {
 })
 
 //update password
-router.post('/user/forget-password/update-password/:email', async (req, res) => {
+router.post('/user/forget-password/update-password', async (req, res) => {
     try {
-        const user = await User.findOne({email: req.params.email})
+        const user = await User.findOne({email: req.query.email})
         user.password = req.body.password
         await user.save()
         res.send({msg: "password was updated"}) 
@@ -193,9 +193,9 @@ router.post('/user/change-password', auth, async (req, res) => {
 })
 
 //get contacts
-router.get('/contacts/:id', auth, async (req, res) => {
+router.get('/contacts', auth, async (req, res) => {
     try {
-        const id = mongoose.Types.ObjectId(req.params.id.trim())
+        const id = mongoose.Types.ObjectId(req.query.id.trim())
         const contacts = await Wallet.findOne({owner: id})
 
         if(!contacts) throw new Error("no contact found")
