@@ -14,13 +14,7 @@ router.post('/user/register', async (req, res) => {
         await user.save()
 
         const token = await user.generateAuthToken()
-        res.send({
-            name: `${user.firstname} ${user.lastname}`,
-            username: user.username,
-            email: user.email,
-            phone: user.phone,
-            token
-        })
+        res.send({user})
    } catch (err) {
         res.status(400).send({err: err.message})
    }
@@ -41,13 +35,7 @@ router.post('/user/login', async (req, res) => {
             throw new  Error("invalid password")
 
             const token = await user.generateAuthToken()
-            res.send({
-                name: `${user.firstname} ${user.lastname}`,
-                username: user.username,
-                email: user.email,
-                phone: user.phone,
-                token
-            })
+            res.send({user})
     } catch (err) {
         res.status(404).send({err: err.message})
     }
@@ -84,11 +72,14 @@ router.post('/user/update', async (req, res) => {
 //adding wallet
 router.post('/user/add-wallet', auth, async (req, res) => {
     try {
+        const user = await User.findOne(mongoose.Types.ObjectId(req.query.id.trim())) 
+        if(!user) throw new Error("user not found")
+
         const isAlreadyExist = await Wallet.findOne({address: req.body.address})
         if(isAlreadyExist) throw new Error("wallet already in use, please use a unique wallet address")
         
         const wallet = new Wallet(req.body)
-        wallet.owner = req.user._id
+        wallet.owner = user._id
         await wallet.save()
         res.send(wallet)
     } catch (err) {
@@ -176,16 +167,20 @@ router.post('/user/forget-password/update-password', async (req, res) => {
 //change password
 router.post('/user/change-password', auth, async (req, res) => {
     try {
+        const user = await User.findOne(mongoose.Types.ObjectId(req.query.id.trim())) 
+        if(!user) throw new Error("user not found")
+
         const {currentPassword, newPassword, confirmPassword} = req.body
         
         if(newPassword !== confirmPassword) 
             throw new Error("confirm password does not match to the entered password")
         
-        const isCorrectPassword = bcrypt.compare(currentPassword, req.user.password)
+        const isCorrectPassword = bcrypt.compare(currentPassword, user.password)
         if(!isCorrectPassword)
             throw new  Error("current password is invalid")
         
-        req.user.password = newPassword
+        user.password = newPassword
+        await user.save()
         res.send({msg: "password updated"})
     } catch (err) {
         res.send({err: err.message})
