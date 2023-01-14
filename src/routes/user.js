@@ -75,8 +75,8 @@ router.post('/user/add-wallet', auth, async (req, res) => {
         const user = await User.findOne(mongoose.Types.ObjectId(req.query.id.trim())) 
         if(!user) throw new Error("user not found")
 
-        const isAlreadyExist = await Wallet.findOne({address: req.body.address})
-        if(isAlreadyExist) throw new Error("wallet already in use, please use a unique wallet address")
+        const isAlreadyExist = await Wallet.findOne({name: req.body.name})
+        if(isAlreadyExist) throw new Error("this name already in use")
         
         const wallet = new Wallet(req.body)
         wallet.owner = user._id
@@ -191,7 +191,7 @@ router.post('/user/change-password', auth, async (req, res) => {
 router.get('/contacts', auth, async (req, res) => {
     try {
         const id = mongoose.Types.ObjectId(req.query.id.trim())
-        const contacts = await Wallet.findOne({owner: id})
+        const contacts = await Wallet.find({owner: id})
 
         if(!contacts) throw new Error("no contact found")
         res.send({contacts})

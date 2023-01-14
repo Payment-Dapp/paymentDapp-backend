@@ -3,48 +3,48 @@ const express = require("express");
 const path = require("path");
 const ipfsClient = require("ipfs-http-client");
 
-const { createIpfsHash } = require("../pinataService.js");
+// const { createIpfsHash } = require("../pinataService.js");
 const { getMaxListeners } = require("process");
 const router = express.Router();
 
 const jsonPath = path.resolve(`./uploads/nft-data.json`);
 const filePath = path.resolve(`./uploads/image.png`);
 
-router.post("/upload-image", async (req, res) => {
-  try {
-    try {
-      if (req.files) {
-        const files = req.files;
+// router.post("/upload-image", async (req, res) => {
+//   try {
+//     try {
+//       if (req.files) {
+//         const files = req.files;
 
-        for (let file in files) {
-          console.log("files", files);
-          files[file].mv(`${filePath}`, (err) => {
-            if (err) {
-              return res.status(500).json({
-                ok: false,
-                err,
-              });
-            } else {
-              console.log("file", file);
-            }
-          });
-        }
-        console.log("working fine in server");
-        console.log("lets go");
-        const imageHash = await createIpfsHash("image");
-        console.log("imageHash", imageHash.IpfsHash);
+//         for (let file in files) {
+//           console.log("files", files);
+//           files[file].mv(`${filePath}`, (err) => {
+//             if (err) {
+//               return res.status(500).json({
+//                 ok: false,
+//                 err,
+//               });
+//             } else {
+//               console.log("file", file);
+//             }
+//           });
+//         }
+//         console.log("working fine in server");
+//         console.log("lets go");
+//         const imageHash = await createIpfsHash("image");
+//         console.log("imageHash", imageHash.IpfsHash);
 
-        res.json({ data: imageHash.IpfsHash });
-      } else {
-        res.sendStatus(404);
-      }
-    } catch (error) {
-      console.log("error", error);
-    }
-  } catch (err) {
-    res.send({ err: err.message });
-  }
-});
+//         res.json({ data: imageHash.IpfsHash });
+//       } else {
+//         res.sendStatus(404);
+//       }
+//     } catch (error) {
+//       console.log("error", error);
+//     }
+//   } catch (err) {
+//     res.send({ err: err.message });
+//   }
+// });
 
 
 router.post("/upload-json", async (req, res) => {
