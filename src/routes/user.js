@@ -14,7 +14,8 @@ router.post('/user/register', async (req, res) => {
         await user.save()
 
         const token = await user.generateAuthToken()
-        res.send({user})
+        const {_id, firstname, lastname, username, email, phone} = user
+        res.send({_id, firstname, lastname, username, email, phone, token})
    } catch (err) {
         res.status(400).send({err: err.message})
    }
@@ -34,8 +35,9 @@ router.post('/user/login', async (req, res) => {
         if(!isCorrectPassword)
             throw new  Error("invalid password")
 
-            const token = await user.generateAuthToken()
-            res.send({user})
+        const token = await user.generateAuthToken()
+        const {_id, firstname, lastname, username, email, phone} = user
+        res.send({_id, firstname, lastname, username, email, phone, token})
     } catch (err) {
         res.status(404).send({err: err.message})
     }
