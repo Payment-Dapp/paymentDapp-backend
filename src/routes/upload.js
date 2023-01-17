@@ -2,9 +2,13 @@ const fs = require("fs");
 const express = require("express");
 const path = require("path");
 const ipfsClient = require("ipfs-http-client");
+const Upload = require('../models/upload')
+const auth = require('../config/auth')
 
 // const { createIpfsHash } = require("../pinataService.js");
 const { getMaxListeners } = require("process");
+const User = require("../models/user");
+const { default: mongoose } = require("mongoose");
 const router = express.Router();
 
 const jsonPath = path.resolve(`./uploads/nft-data.json`);
@@ -47,7 +51,8 @@ const filePath = path.resolve(`./uploads/image.png`);
 // });
 
 
-router.post("/upload-json", async (req, res) => {
+//upload json
+router.post("/upload-json", auth, async (req, res) => {
   try {
     const projectId = "2FTxK8ufxIOSqlj707YFqcZ5w2s";
     const projectSecretKey = "75b6027b9e2dab7c98b17203fe180c30";
@@ -62,12 +67,38 @@ router.post("/upload-json", async (req, res) => {
 
     const added = await ipfs.add(data);
     const url = `https://skywalker.infura-ipfs.io/ipfs/${added.path}`;
+
+    const uploadUrl = await Upload({url, owner: req.user._id})
+    await uploadUrl.save()
     /* after file is uploaded to IPFS, return the URL to use it in the transaction */
     console.log(url);
-    res.send({ url });
+    res.send({ uploadUrl });
   } catch (error) {
     console.log("Error uploading file: ", error);
   }
 });
+
+//get all urls
+router.get('/get-all-urls', async (req, res) => {
+  try {
+    const urls = await Upload.find()
+    res.send({urls})
+  } catch (err) {
+    res.send({err: err.message})
+  }
+})
+
+//get url for specific user
+router.get('/get-url', async (req, res) => {
+  try {
+    const user = await User.findById(mongoose.Types.ObjectId(req.query.id))
+    if(!user) throw new Error("user not found")
+
+    const uploads = await Upload.find({owner: user._id})
+    res.send({uploads})
+  } catch (err) {
+    res.send({err: err.message})
+  }
+})
 
 module.exports = router;
