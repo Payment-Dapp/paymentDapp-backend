@@ -52,7 +52,7 @@ const filePath = path.resolve(`./uploads/image.png`);
 
 
 //upload json
-router.post("/upload-json", auth, async (req, res) => {
+router.post("/upload-json", async (req, res) => {
   try {
     const projectId = "2FTxK8ufxIOSqlj707YFqcZ5w2s";
     const projectSecretKey = "75b6027b9e2dab7c98b17203fe180c30";
