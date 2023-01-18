@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 
 const uploadShema = mongoose.Schema({
   url: String,
-  owner: mongoose.Types.ObjectId
+  wallet_address: String
 })
 
 module.exports = mongoose.model('Upload', uploadShema)

@@ -64,11 +64,12 @@ router.post("/upload-json", auth, async (req, res) => {
       },
     });
     const data = JSON.stringify(req.body);
-
+    
     const added = await ipfs.add(data);
+    const wallet_address = req.query.wallet_address
     const url = `https://skywalker.infura-ipfs.io/ipfs/${added.path}`;
 
-    const uploadUrl = await Upload({url, owner: req.user._id})
+    const uploadUrl = await Upload({url, wallet_address})
     await uploadUrl.save()
     /* after file is uploaded to IPFS, return the URL to use it in the transaction */
     console.log(url);
@@ -88,13 +89,10 @@ router.get('/get-all-urls', async (req, res) => {
   }
 })
 
-//get url for specific user
+//get url for specific wallet address
 router.get('/get-url', async (req, res) => {
   try {
-    const user = await User.findById(mongoose.Types.ObjectId(req.query.id))
-    if(!user) throw new Error("user not found")
-
-    const uploads = await Upload.find({owner: user._id})
+    const uploads = await Upload.find({wallet_address: req.query.wallet_address})
     res.send({uploads})
   } catch (err) {
     res.send({err: err.message})
