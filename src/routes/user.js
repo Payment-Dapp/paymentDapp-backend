@@ -246,4 +246,37 @@ router.get("/contacts", auth, async (req, res) => {
   }
 });
 
+//send email notifications
+router.post('/user/send-email-notification', auth, async (req, res) => {
+  try {
+    const id = mongoose.Types.ObjectId(req.query.id.trim());
+    const user = await User.findById(id);
+    if (!user) throw new Error("user not found");
+
+    const sendMail = async (mailOptions) => {
+      try {
+        let emailTransporter = await createTransporter();
+        await emailTransporter.sendMail(mailOptions);
+      } catch (err) {
+        console.log("ERROR: ", err)
+      }
+    }; 
+
+    sendMail({
+      from: process.env.USER_EMAIL,
+      to: user.email,
+      subject: "PaymentDapp details",
+      html: `
+      <p>Hi, the following details are from your paymentDapp account</p>
+      <p>Name: ${req.body.name}</p>
+      <p>Price: ${req.body.price}</p>
+      <p>Transaction Hash: ${req.body.txhash}</p>`,
+    });
+
+    res.send({msg: "email sent successfully"})
+  } catch (err) {
+    res.status(400).send({ err: err.message });
+  }
+}) 
+
 module.exports = router;
