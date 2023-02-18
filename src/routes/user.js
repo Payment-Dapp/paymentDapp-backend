@@ -8,6 +8,26 @@ const nodemailer = require("nodemailer");
 const mongoose = require("mongoose");
 const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
+const multer = require("multer")
+const sharp = require("sharp")
+const base64 = require('base64-arraybuffer')
+const fallback = require('../../fallback')
+
+/*uploading images*/
+const upload = multer({
+	limits: {
+		fileSize: 1000000
+	},
+	fileFilter(req, file, cb){
+		if(!file.originalname.match(/\.(jpg|jpeg|png)$/)){
+			return cb(new Error("please upload a valid img"))
+		}
+		cb(undefined, true)
+	}
+})
+
+/*encoding image*/
+const encodeAvatar = (buffer) =>  base64.encode(buffer)
 
 const createTransporter = async () => {
   try {
@@ -51,18 +71,26 @@ const createTransporter = async () => {
 };
 
 //register a user
-router.post("/user/register", async (req, res) => {
+router.post("/user/register", upload.single('avatar'), async (req, res) => {
   try {
     const user = new User(req.body);
+    if(req.file){
+			const buffer = await sharp(req.file.buffer).resize({width: 250, height: 250}).png().toBuffer()
+			user.avatar = buffer
+		} else {
+      user.avatar = fallback
+    }
     await user.save();
 
     const token = await user.generateAuthToken();
-    const { _id, firstname, lastname, username, email, phone } = user;
-    res.send({ _id, firstname, lastname, username, email, phone, token });
+    const { _id, firstname, lastname, username, email, phone, avatar } = user;
+    res.send({ _id, firstname, lastname, username, email, phone, token, avatar });
   } catch (err) {
     res.status(400).send({ err: err.message });
   }
 });
+
+
 
 //loging in existing user
 router.post("/user/login", async (req, res) => {
@@ -88,7 +116,7 @@ router.post("/user/login", async (req, res) => {
 });
 
 //editing user profile
-router.post("/user/update", async (req, res) => {
+router.post("/user/update", upload.single('avatar'), async (req, res) => {
   try {
     const id = mongoose.Types.ObjectId(req.query.id.trim());
     const user = await User.findById(id);
@@ -102,6 +130,11 @@ router.post("/user/update", async (req, res) => {
         user[f] = req.body[f];
       }
     });
+
+    if(req.file){
+			const buffer = await sharp(req.file.buffer).resize({width: 250, height: 250}).png().toBuffer()
+			req.user.avatar = buffer
+    }
     await user.save();
     res.send({
       msg: "user updated",

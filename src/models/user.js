@@ -44,6 +44,9 @@ const userSchema = mongoose.Schema ({
             if(!validator.isStrongPassword(value)) throw new Error("Password is empty or inavlid")
         }
     },
+    avatar: {
+        type: Buffer
+    },
     tokens: [{
         token: {
             type: String,
