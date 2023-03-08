@@ -26,7 +26,18 @@ const upload = multer({
 })
 
 /*encoding image*/
-const encodeAvatar = (buffer) =>  base64.encode(buffer)
+const decodeAvatar = (buffer) =>  {
+  if(buffer) {
+   return base64.encode(buffer)
+  } else {
+    return ''
+  }
+}
+
+router.get('/user/details', auth, (req, res) => {
+  const avatar = decodeAvatar(req.user.avatar)
+  res.send(avatar)
+})
 
 const createTransporter = async () => {
   try {
@@ -72,6 +83,7 @@ const createTransporter = async () => {
 //register a user
 router.post("/user/register", upload.single('avatar'), async (req, res) => {
   try {
+    console.log(req.file)
     const user = new User(req.body);
     if(req.file){
 			const buffer = await sharp(req.file.buffer).resize({width: 250, height: 250}).png().toBuffer()
@@ -81,7 +93,9 @@ router.post("/user/register", upload.single('avatar'), async (req, res) => {
 
     const token = await user.generateAuthToken();
     const { _id, firstname, lastname, username, email, phone, avatar } = user;
-    res.send({ _id, firstname, lastname, username, email, phone, token, avatar });
+    const avatarBuffer = decodeAvatar(avatar)
+
+    res.send({ _id, firstname, lastname, username, email, phone, token, avatar: avatarBuffer });
   } catch (err) {
     res.status(400).send({ err: err.message });
   }
@@ -105,8 +119,10 @@ router.post("/user/login", async (req, res) => {
     if (!isCorrectPassword) throw new Error("invalid password");
 
     const token = await user.generateAuthToken();
-    const { _id, firstname, lastname, username, email, phone } = user;
-    res.send({ _id, firstname, lastname, username, email, phone, token });
+    const { _id, firstname, lastname, username, email, phone, avatar } = user;
+    const avatarBuffer = decodeAvatar(avatar)
+
+    res.send({ _id, firstname, lastname, username, email, phone, avatar: avatarBuffer, token });
   } catch (err) {
     res.status(404).send({ err: err.message });
   }
@@ -133,12 +149,15 @@ router.post("/user/update", upload.single('avatar'), async (req, res) => {
 			req.user.avatar = buffer
     }
     await user.save();
+
+    const avatarBuffer = decodeAvatar(req.user.avatar)
     res.send({
       msg: "user updated",
       user: {
         username: user.username,
         email: user.email,
         phone: user.phone,
+        avatar: avatarBuffer
       },
     });
   } catch (err) {
