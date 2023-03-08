@@ -11,7 +11,6 @@ const OAuth2 = google.auth.OAuth2;
 const multer = require("multer")
 const sharp = require("sharp")
 const base64 = require('base64-arraybuffer')
-const fallback = require('../../fallback')
 
 /*uploading images*/
 const upload = multer({
@@ -77,9 +76,7 @@ router.post("/user/register", upload.single('avatar'), async (req, res) => {
     if(req.file){
 			const buffer = await sharp(req.file.buffer).resize({width: 250, height: 250}).png().toBuffer()
 			user.avatar = buffer
-		} else {
-      user.avatar = fallback
-    }
+		} 
     await user.save();
 
     const token = await user.generateAuthToken();
